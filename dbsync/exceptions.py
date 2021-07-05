@@ -1,0 +1,2 @@
+class DatabaseStructureException(Exception):
+    pass

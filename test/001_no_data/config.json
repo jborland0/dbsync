@@ -1,0 +1,11 @@
+{
+	"tables": [
+		"ledger_transactiontype",
+		"ledger_category",
+		"ledger_entity",
+		"ledger_ledger",
+		"ledger_settings",
+		"ledger_banknamelookup"
+	],
+	"generate_mysql_dump": false
+}

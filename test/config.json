@@ -1,0 +1,22 @@
+{
+	"hosts": [
+		{
+			"id": 0,
+			"name": "db0",
+			"host": "127.0.0.1",
+			"port": 3306,
+			"database": "test_db_0",
+			"user": "test_user_0",
+			"password": "test_password_0"
+		},
+		{
+			"id": 1,
+			"name": "db1",
+			"host": "127.0.0.1",
+			"port": 3306,
+			"database": "test_db_1",
+			"user": "test_user_1",
+			"password": "test_password_1"
+		}
+	]
+}
