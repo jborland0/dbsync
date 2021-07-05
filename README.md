@@ -4,11 +4,11 @@ Synchronizes two databases according to a configuration file.
 
 to test:
 
-python -m unittest test.test_dbsync
+	python -m unittest test.test_dbsync
 
 to run from command line:
 
-python -m dbsync.dbsync &lt;path to config file&gt;
+	python -m dbsync.dbsync &lt;path to config file&gt;
 
 where the config file looks something like the following:
 
