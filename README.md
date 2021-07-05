@@ -8,7 +8,7 @@ to test:
 
 to run from command line:
 
-	python -m dbsync.dbsync &lt;path to config file&gt;
+	python -m dbsync.dbsync <path to config file>
 
 where the config file looks something like the following:
 
