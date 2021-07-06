@@ -40,3 +40,5 @@ where the config file looks something like the following:
 			"etc..."
 		]
 	}
+
+Read more on my [blog](https://borland.us/blog/index.php/2021/07/06/dbsync/).
