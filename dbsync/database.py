@@ -59,6 +59,11 @@ class Database:
                 row_dicts.append(dict(zip(col_headers, result)))
             return row_dicts
 
+    def execute_sql(self, sql):
+        with self.conn.cursor() as cursor:
+            for result in cursor.execute(sql, multi=True):
+                result.fetchall()
+
     def execute_sql_file(self, file_path):
         with self.conn.cursor() as cursor:
             with open(file_path, 'r') as f:
@@ -76,6 +81,9 @@ class Database:
                     result = (result_b[0], result_b[1].decode(), result_b[2], result_b[3], result_b[4])
                     row_dicts.append(dict(zip(col_headers, result)))
             return row_dicts
+
+    def get_user(self):
+        return self.user
 
     def query(self, sql):
         with self.conn.cursor() as cursor:

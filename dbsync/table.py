@@ -1,5 +1,6 @@
 from dbsync.exceptions import DatabaseStructureException
 import copy
+from mysql.connector import DatabaseError
 
 
 def prepare_map_keys(columns, prefix, key):
@@ -27,6 +28,10 @@ class Table:
         self.verify_map_table(db1)
         self.verify_sync_table(db1)
 
+        # verify triggers
+        self.verify_triggers(db0)
+        self.verify_triggers(db1)
+
     def verify_map_table(self, db):
         # create map table name
         map_table_name = 'map_' + self.name
@@ -53,7 +58,7 @@ class Table:
 
     def verify_sync_table(self, db):
         # create sync table name
-        sync_table_name = 'sync_' + self.name
+        sync_table_name = "sync_" + self.name
 
         # create list of primary keys
         primary_keys = db.get_primary_keys(self.name)
@@ -75,3 +80,42 @@ class Table:
                 raise DatabaseStructureException("table " + sync_table_name + " does not match")
         else:
             db.create_table(sync_table_name, sync_table_desc)
+
+    def verify_triggers(self, db):
+        insert_trigger_sql = self.generate_insert_trigger(db)
+        try:
+            db.execute_sql(insert_trigger_sql)
+        except DatabaseError as dberr:
+            if str(dberr) == "1359 (HY000): Trigger already exists":
+                pass  # TODO: make sure trigger looks like what we tried to create?
+            else:
+                raise dberr
+
+    def generate_insert_trigger(self, db):
+        sql = "CREATE TRIGGER trigger_insert_" + self.name + " AFTER INSERT ON " + self.name +\
+            " FOR EACH ROW BEGIN " + self.generate_insert_sync_sql(db) + " END;"
+        return sql
+
+    def generate_insert_sync_sql(self, db, indent=""):
+        # get table description
+        sync_table_name = "sync_" + self.name
+        sync_table_desc = db.describe_table(sync_table_name)
+
+        # generate lists of names, values
+        names = ""
+        values = ""
+        for field in sync_table_desc:
+            names += field['Field'] + ","
+            if field['Field'] == "created" or field['Field'] == "modified":
+                values += "localtimestamp,"
+            elif field['Field'] == "deleted":
+                values += "0,"
+            else:
+                values += "NEW." + field['Field'][4:] + ","
+
+        # compose insert statement
+        sql = indent + "INSERT INTO " + sync_table_name + " (" +\
+            names[:-1] + ") VALUES (" + values[:-1] + ");"
+
+        # TODO: check to make sure 1 row was affected
+        return sql
