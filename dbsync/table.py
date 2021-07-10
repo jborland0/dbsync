@@ -82,6 +82,14 @@ class Table:
             db.create_table(sync_table_name, sync_table_desc)
 
     def verify_triggers(self, db):
+        delete_trigger_sql = self.generate_delete_trigger(db)
+        try:
+            db.execute_sql(delete_trigger_sql)
+        except DatabaseError as dberr:
+            if str(dberr) == "1359 (HY000): Trigger already exists":
+                pass  # TODO: make sure trigger looks like what we tried to create?
+            else:
+                raise dberr
         insert_trigger_sql = self.generate_insert_trigger(db)
         try:
             db.execute_sql(insert_trigger_sql)
@@ -90,13 +98,44 @@ class Table:
                 pass  # TODO: make sure trigger looks like what we tried to create?
             else:
                 raise dberr
+        update_trigger_sql = self.generate_update_trigger(db)
+        try:
+            db.execute_sql(update_trigger_sql)
+        except DatabaseError as dberr:
+            if str(dberr) == "1359 (HY000): Trigger already exists":
+                pass  # TODO: make sure trigger looks like what we tried to create?
+            else:
+                raise dberr
+
+    def generate_delete_trigger(self, db):
+        sql = "CREATE TRIGGER trigger_delete_" + self.name + " AFTER DELETE ON " + self.name +\
+            " FOR EACH ROW BEGIN " + self.generate_delete_sync_sql(db) + " END;"
+        return sql
+
+    def generate_delete_sync_sql(self, db):
+        # get table description
+        sync_table_name = "sync_" + self.name
+        sync_table_desc = db.describe_table(sync_table_name)
+
+        # generate where clause
+        where_clause = ""
+        for field in sync_table_desc:
+            if field['Key'] == "PRI":
+                where_clause += field['Field'] + " = OLD." + field['Field'][4:] + " AND "
+
+        # compose update statement
+        sql = "UPDATE " + sync_table_name + " SET modified = localtimestamp, deleted = 1 WHERE " +\
+              where_clause[:-5] + ";"
+
+        # TODO: check to make sure 1 row was affected
+        return sql
 
     def generate_insert_trigger(self, db):
         sql = "CREATE TRIGGER trigger_insert_" + self.name + " AFTER INSERT ON " + self.name +\
             " FOR EACH ROW BEGIN " + self.generate_insert_sync_sql(db) + " END;"
         return sql
 
-    def generate_insert_sync_sql(self, db, indent=""):
+    def generate_insert_sync_sql(self, db):
         # get table description
         sync_table_name = "sync_" + self.name
         sync_table_desc = db.describe_table(sync_table_name)
@@ -114,8 +153,30 @@ class Table:
                 values += "NEW." + field['Field'][4:] + ","
 
         # compose insert statement
-        sql = indent + "INSERT INTO " + sync_table_name + " (" +\
+        sql = "INSERT INTO " + sync_table_name + " (" +\
             names[:-1] + ") VALUES (" + values[:-1] + ");"
+
+        # TODO: check to make sure 1 row was affected
+        return sql
+
+    def generate_update_trigger(self, db):
+        sql = "CREATE TRIGGER trigger_update_" + self.name + " AFTER UPDATE ON " + self.name +\
+            " FOR EACH ROW BEGIN " + self.generate_update_sync_sql(db) + " END;"
+        return sql
+
+    def generate_update_sync_sql(self, db):
+        # get table description
+        sync_table_name = "sync_" + self.name
+        sync_table_desc = db.describe_table(sync_table_name)
+
+        # generate where clause
+        where_clause = ""
+        for field in sync_table_desc:
+            if field['Key'] == "PRI":
+                where_clause += field['Field'] + " = NEW." + field['Field'][4:] + " AND "
+
+        # compose update statement
+        sql = "UPDATE " + sync_table_name + " SET modified = localtimestamp WHERE " + where_clause[:-5] + ";"
 
         # TODO: check to make sure 1 row was affected
         return sql
