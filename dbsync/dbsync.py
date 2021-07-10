@@ -1,10 +1,14 @@
 import json
 from dbsync.database import Database
+from dbsync.config import Config
 from dbsync.table import Table
 import sys
 
 
 def sync(config):
+    # set global strings
+    Config.strings = config['strings']
+
     # create database
     with Database(config['hosts'][0]) as db0, Database(config['hosts'][1]) as db1:
         sync_db(db0, db1, config['tables'])

@@ -2,6 +2,7 @@ from mysql import connector
 import json
 import importlib.resources
 from dbsync.exceptions import DatabaseStructureException
+from dbsync.config import Config
 
 
 class Database:
@@ -103,7 +104,7 @@ class Database:
 
     def verify_host_tables(self):
         # if sync_hosts table doesn't exist, create it
-        if not self.table_exists("sync_hosts"):
+        if not self.table_exists(Config.strings["sync_hosts_table_name"]):
             with self.conn.cursor() as cursor:
                 cursor.execute(importlib.resources.read_text("dbsync", "sync_hosts.sql"))
 

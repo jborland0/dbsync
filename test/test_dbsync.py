@@ -5,6 +5,7 @@ from unittest import TestCase
 import os
 import json
 from dbsync import dbsync
+from dbsync.config import Config
 from dbsync.dbsync import Database
 import re
 
@@ -49,6 +50,9 @@ class Test(TestCase):
             db_config_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
         with open(db_config_file_path, 'r') as db_config_file:
             db_config = json.loads(db_config_file.read())
+
+        # set global strings
+        Config.strings = db_config["strings"]
 
         # for each test directory
         test_dirs = list_test_dirs()

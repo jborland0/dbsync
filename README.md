@@ -38,7 +38,12 @@ where the config file looks something like the following:
 			"product",
 			"sales_order",
 			"etc..."
-		]
+		],
+        "strings": {
+            "sync_hosts_table_name": "sync_hosts",
+            "sync_table_name": "sync_{}",
+            "map_table_name": "map_{}"
+        }
 	}
 
 Read more on my [blog](https://borland.us/blog/index.php/2021/07/06/dbsync/).
