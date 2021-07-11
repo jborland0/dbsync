@@ -1,11 +1,13 @@
+from dbsync.config import Config
+from dbsync.config import unformat
 from dbsync.exceptions import DatabaseStructureException
 import copy
 from mysql.connector import DatabaseError
 
 
-def prepare_map_keys(columns, prefix, key):
+def prepare_map_keys(columns, fmt, key):
     for col in columns:
-        col['Field'] = prefix + col['Field']
+        col['Field'] = fmt.format(col['Field'])
         col['Key'] = key
 
 
@@ -34,17 +36,17 @@ class Table:
 
     def verify_map_table(self, db):
         # create map table name
-        map_table_name = 'map_' + self.name
+        map_table_name = Config.strings["map_table_name"].format(self.name)
 
         # create lists of local and remote keys
         local_primary_keys = db.get_primary_keys(self.name)
         remote_primary_keys = copy.deepcopy(local_primary_keys)
-        prepare_map_keys(local_primary_keys, "pkl_", "PRI")
-        prepare_map_keys(remote_primary_keys, "pkr_", "")
+        prepare_map_keys(local_primary_keys, Config.strings["local_primary_key"], "PRI")
+        prepare_map_keys(remote_primary_keys, Config.strings["remote_primary_key"], "")
 
         # create list of map table columns
-        map_table_desc = [{'Field': 'rhostid', 'Type': 'int', 'Null': 'NO', 'Key': 'PRI', 'Default': None}] \
-            + local_primary_keys + remote_primary_keys
+        map_table_desc = [{'Field': Config.strings["remote_host_id"], 'Type': 'int', 'Null': 'NO', 'Key': 'PRI',
+                           'Default': None}] + local_primary_keys + remote_primary_keys
 
         # if map table exists
         if db.table_exists(map_table_name):
@@ -58,20 +60,23 @@ class Table:
 
     def verify_sync_table(self, db):
         # create sync table name
-        sync_table_name = "sync_" + self.name
+        sync_table_name = Config.strings["sync_table_name"].format(self.name)
 
         # create list of primary keys
         primary_keys = db.get_primary_keys(self.name)
-        prepare_map_keys(primary_keys, "pkl_", "PRI")
+        prepare_map_keys(primary_keys, Config.strings["local_primary_key"], "PRI")
 
         # create list of map table columns
         sync_table_desc = primary_keys + [
-            {'Field': 'created', 'Type': 'timestamp', 'Null': 'NO', 'Key': '', 'Default': None},
-            {'Field': 'modified', 'Type': 'timestamp', 'Null': 'NO', 'Key': '', 'Default': None},
-            {'Field': 'deleted', 'Type': 'tinyint(1)', 'Null': 'NO', 'Key': '', 'Default': None}
+            {'Field': Config.strings["created_column_name"],
+             'Type': 'timestamp', 'Null': 'NO', 'Key': '', 'Default': None},
+            {'Field': Config.strings["modified_column_name"],
+             'Type': 'timestamp', 'Null': 'NO', 'Key': '', 'Default': None},
+            {'Field': Config.strings["deleted_column_name"],
+             'Type': 'tinyint(1)', 'Null': 'NO', 'Key': '', 'Default': None}
         ]
 
-        # if map table exists
+        # if sync table exists
         if db.table_exists(sync_table_name):
             # get description of table
             existing_sync_table = db.describe_table(sync_table_name)
@@ -108,36 +113,37 @@ class Table:
                 raise dberr
 
     def generate_delete_trigger(self, db):
-        sql = "CREATE TRIGGER trigger_delete_" + self.name + " AFTER DELETE ON " + self.name +\
-            " FOR EACH ROW BEGIN " + self.generate_delete_sync_sql(db) + " END;"
+        sql = "CREATE TRIGGER " + Config.strings["delete_trigger_name"].format(self.name) + " AFTER DELETE ON " + \
+              self.name + " FOR EACH ROW BEGIN " + self.generate_delete_sync_sql(db) + " END;"
         return sql
 
     def generate_delete_sync_sql(self, db):
         # get table description
-        sync_table_name = "sync_" + self.name
+        sync_table_name = Config.strings["sync_table_name"].format(self.name)
         sync_table_desc = db.describe_table(sync_table_name)
 
         # generate where clause
         where_clause = ""
         for field in sync_table_desc:
             if field['Key'] == "PRI":
-                where_clause += field['Field'] + " = OLD." + field['Field'][4:] + " AND "
+                where_clause += field['Field'] + " = OLD." + \
+                                unformat(field['Field'], Config.strings["local_primary_key"]) + " AND "
 
         # compose update statement
-        sql = "UPDATE " + sync_table_name + " SET modified = localtimestamp, deleted = 1 WHERE " +\
-              where_clause[:-5] + ";"
+        sql = "UPDATE " + sync_table_name + " SET " + Config.strings["modified_column_name"] +\
+              " = localtimestamp, " + Config.strings["deleted_column_name"] + " = 1 WHERE " + where_clause[:-5] + ";"
 
         # TODO: check to make sure 1 row was affected
         return sql
 
     def generate_insert_trigger(self, db):
-        sql = "CREATE TRIGGER trigger_insert_" + self.name + " AFTER INSERT ON " + self.name +\
-            " FOR EACH ROW BEGIN " + self.generate_insert_sync_sql(db) + " END;"
+        sql = "CREATE TRIGGER " + Config.strings["insert_trigger_name"].format(self.name) + " AFTER INSERT ON " +\
+              self.name + " FOR EACH ROW BEGIN " + self.generate_insert_sync_sql(db) + " END;"
         return sql
 
     def generate_insert_sync_sql(self, db):
         # get table description
-        sync_table_name = "sync_" + self.name
+        sync_table_name = Config.strings["sync_table_name"].format(self.name)
         sync_table_desc = db.describe_table(sync_table_name)
 
         # generate lists of names, values
@@ -145,38 +151,41 @@ class Table:
         values = ""
         for field in sync_table_desc:
             names += field['Field'] + ","
-            if field['Field'] == "created" or field['Field'] == "modified":
+            if field['Field'] == Config.strings["created_column_name"] or \
+                    field['Field'] == Config.strings["modified_column_name"]:
                 values += "localtimestamp,"
-            elif field['Field'] == "deleted":
+            elif field['Field'] == Config.strings["deleted_column_name"]:
                 values += "0,"
             else:
-                values += "NEW." + field['Field'][4:] + ","
+                values += "NEW." + unformat(field['Field'], Config.strings["local_primary_key"]) + ","
 
         # compose insert statement
-        sql = "INSERT INTO " + sync_table_name + " (" +\
-            names[:-1] + ") VALUES (" + values[:-1] + ");"
+        sql = "INSERT INTO " + sync_table_name + " (" + \
+              names[:-1] + ") VALUES (" + values[:-1] + ");"
 
         # TODO: check to make sure 1 row was affected
         return sql
 
     def generate_update_trigger(self, db):
-        sql = "CREATE TRIGGER trigger_update_" + self.name + " AFTER UPDATE ON " + self.name +\
-            " FOR EACH ROW BEGIN " + self.generate_update_sync_sql(db) + " END;"
+        sql = "CREATE TRIGGER " + Config.strings["update_trigger_name"].format(self.name) + " AFTER UPDATE ON " + \
+              self.name + " FOR EACH ROW BEGIN " + self.generate_update_sync_sql(db) + " END;"
         return sql
 
     def generate_update_sync_sql(self, db):
         # get table description
-        sync_table_name = "sync_" + self.name
+        sync_table_name = Config.strings["sync_table_name"].format(self.name)
         sync_table_desc = db.describe_table(sync_table_name)
 
         # generate where clause
         where_clause = ""
         for field in sync_table_desc:
             if field['Key'] == "PRI":
-                where_clause += field['Field'] + " = NEW." + field['Field'][4:] + " AND "
+                where_clause += field['Field'] + " = NEW." + \
+                                unformat(field['Field'], Config.strings["local_primary_key"]) + " AND "
 
         # compose update statement
-        sql = "UPDATE " + sync_table_name + " SET modified = localtimestamp WHERE " + where_clause[:-5] + ";"
+        sql = "UPDATE " + sync_table_name + " SET " + Config.strings["modified_column_name"] + \
+              " = localtimestamp WHERE " + where_clause[:-5] + ";"
 
         # TODO: check to make sure 1 row was affected
         return sql

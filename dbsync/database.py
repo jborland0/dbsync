@@ -103,13 +103,15 @@ class Database:
             return cursor.fetchone()[0] == 1
 
     def verify_host_tables(self):
+        sync_hosts = Config.strings["sync_hosts_table_name"]
+
         # if sync_hosts table doesn't exist, create it
-        if not self.table_exists(Config.strings["sync_hosts_table_name"]):
+        if not self.table_exists(sync_hosts):
             with self.conn.cursor() as cursor:
-                cursor.execute(importlib.resources.read_text("dbsync", "sync_hosts.sql"))
+                cursor.execute(importlib.resources.read_text("dbsync", sync_hosts + ".sql"))
 
         # verify that sync_hosts table looks like we are expecting
-        sync_hosts_actual = self.describe_table("sync_hosts")
-        sync_hosts_template = json.loads(importlib.resources.read_text("dbsync", "sync_hosts.json"))
+        sync_hosts_actual = self.describe_table(sync_hosts)
+        sync_hosts_template = json.loads(importlib.resources.read_text("dbsync", sync_hosts + ".json"))
         if sync_hosts_actual != sync_hosts_template:
-            raise DatabaseStructureException("sync_hosts table does not match template")
+            raise DatabaseStructureException(sync_hosts + " table does not match template")
