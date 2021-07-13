@@ -62,14 +62,21 @@ class Database:
 
     def execute_sql(self, sql):
         with self.conn.cursor() as cursor:
-            for result in cursor.execute(sql, multi=True):
-                result.fetchall()
+            cursor.execute(sql)
+        self.conn.commit()
 
-    def execute_sql_file(self, file_path):
+    def execute_sql_file(self, file_path_or_list):
+        # if file path is a list
+        if isinstance(file_path_or_list, list):
+            file_paths = file_path_or_list
+        else:
+            file_paths = [file_path_or_list]
+
         with self.conn.cursor() as cursor:
-            with open(file_path, 'r') as f:
-                for result in cursor.execute(f.read(), multi=True):
-                    result.fetchall()
+            for file_path in file_paths:
+                with open(file_path, 'r') as f:
+                    for result in cursor.execute(f.read(), multi=True):
+                        result.fetchall()
 
     def get_primary_keys(self, table_name):
         with self.conn.cursor() as cursor:

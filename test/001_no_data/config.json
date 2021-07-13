@@ -1,4 +1,18 @@
 {
+	"hosts": [
+		{
+			"id": 0,
+			"setup": "setup_db0.sql",
+			"verify": "verify_db0.sql",
+			"teardown": "teardown_db0.sql"
+		},
+		{
+			"id": 1,
+			"setup": "setup_db1.sql",
+			"verify": "verify_db1.sql",
+			"teardown": "teardown_db1.sql"
+		}
+	],
 	"tables": [
 		"ledger_transactiontype",
 		"ledger_category",

@@ -1,0 +1,25 @@
+{
+	"hosts": [
+		{
+			"id": 0,
+			"setup": "../001_no_data/setup_db0.sql",
+			"verify": "../001_no_data/verify_db0.sql",
+			"teardown": "../001_no_data/teardown_db0.sql"
+		},
+		{
+			"id": 1,
+			"setup": "../001_no_data/setup_db1.sql",
+			"verify": "../001_no_data/verify_db1.sql",
+			"teardown": "../001_no_data/teardown_db1.sql"
+		}
+	],
+	"tables": [
+		"ledger_transactiontype",
+		"ledger_category",
+		"ledger_entity",
+		"ledger_ledger",
+		"ledger_settings",
+		"ledger_banknamelookup"
+	],
+	"generate_mysql_dump": false
+}

@@ -6,6 +6,7 @@ import os
 import json
 from dbsync import dbsync
 from dbsync.config import Config
+from dbsync.config import merge
 from dbsync.dbsync import Database
 import re
 
@@ -64,26 +65,26 @@ class Test(TestCase):
                 test_config = json.loads(test_config_file.read())
 
             # combine db config, test config into single config object
-            config = {**db_config, **test_config}
+            config = merge(db_config, test_config)
 
             # open databases
             with Database(config['hosts'][0]) as db0, Database(config['hosts'][1]) as db1:
 
                 # set up test data
-                db0.execute_sql_file(os.path.join(test_dir, "setup_db0.sql"))
-                db1.execute_sql_file(os.path.join(test_dir, "setup_db1.sql"))
+                db0.execute_sql_file(os.path.join(test_dir, config['hosts'][0]['setup']))
+                db1.execute_sql_file(os.path.join(test_dir, config['hosts'][1]['setup']))
 
                 # synchronize test databases
                 dbsync.sync_db(db0, db1, config['tables'])
 
                 # for each host
-                for i, config_host in enumerate(config['hosts']):
+                for config_host in config['hosts']:
 
                     # dump database to string
                     sql_dump = mysqldump(test_dir, config_host)
 
                     # compose sql file name
-                    sql_file = os.path.join(test_dir, "verify_db" + str(i) + ".sql")
+                    sql_file = os.path.join(test_dir, config_host['verify'])
 
                     # if we are creating the verification file
                     if 'generate_mysql_dump' in config and config['generate_mysql_dump']:
@@ -100,8 +101,8 @@ class Test(TestCase):
                                 success = False
 
                 # clean up
-                db0.execute_sql_file(os.path.join(test_dir, "teardown_db0.sql"))
-                db1.execute_sql_file(os.path.join(test_dir, "teardown_db1.sql"))
+                db0.execute_sql_file(os.path.join(test_dir, config['hosts'][0]['teardown']))
+                db1.execute_sql_file(os.path.join(test_dir, config['hosts'][1]['teardown']))
 
                 # fail if not successful
                 if not success:
