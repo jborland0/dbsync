@@ -11,6 +11,14 @@ from dbsync.dbsync import Database
 import re
 
 
+def path_join_list(prefix, string_or_list):
+    if isinstance(string_or_list, list):
+        prefixed = [os.path.join(prefix, s) for s in string_or_list]
+    else:
+        prefixed = os.path.join(prefix, string_or_list)
+    return prefixed
+
+
 def list_test_dirs():
     # get current directory
     test_home = os.path.dirname(os.path.abspath(__file__))
@@ -71,8 +79,8 @@ class Test(TestCase):
             with Database(config['hosts'][0]) as db0, Database(config['hosts'][1]) as db1:
 
                 # set up test data
-                db0.execute_sql_file(os.path.join(test_dir, config['hosts'][0]['setup']))
-                db1.execute_sql_file(os.path.join(test_dir, config['hosts'][1]['setup']))
+                db0.execute_sql_file(path_join_list(test_dir, config['hosts'][0]['setup']))
+                db1.execute_sql_file(path_join_list(test_dir, config['hosts'][1]['setup']))
 
                 # synchronize test databases
                 dbsync.sync_db(db0, db1, config['tables'])
@@ -101,8 +109,8 @@ class Test(TestCase):
                                 success = False
 
                 # clean up
-                db0.execute_sql_file(os.path.join(test_dir, config['hosts'][0]['teardown']))
-                db1.execute_sql_file(os.path.join(test_dir, config['hosts'][1]['teardown']))
+                db0.execute_sql_file(path_join_list(test_dir, config['hosts'][0]['teardown']))
+                db1.execute_sql_file(path_join_list(test_dir, config['hosts'][1]['teardown']))
 
                 # fail if not successful
                 if not success:
