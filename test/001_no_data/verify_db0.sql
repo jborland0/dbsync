@@ -36,7 +36,7 @@ CREATE TABLE `auth_user` (
   `date_joined` datetime(6) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -65,7 +65,7 @@ CREATE TABLE `ledger_banknamelookup` (
   KEY `ledger_banknamelookup_user_id_ace1b4a1_fk_auth_user_id` (`user_id`),
   CONSTRAINT `ledger_banknamelookup_entity_id_b8ccf398_fk_ledger_entity_id` FOREIGN KEY (`entity_id`) REFERENCES `ledger_entity` (`id`),
   CONSTRAINT `ledger_banknamelookup_user_id_ace1b4a1_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2014 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -136,7 +136,7 @@ CREATE TABLE `ledger_category` (
   PRIMARY KEY (`id`),
   KEY `ledger_category_user_id_2bd73e4c_fk_auth_user_id` (`user_id`),
   CONSTRAINT `ledger_category_user_id_2bd73e4c_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -210,7 +210,7 @@ CREATE TABLE `ledger_entity` (
   KEY `ledger_entity_user_id_1c3fd54f_fk_auth_user_id` (`user_id`),
   CONSTRAINT `ledger_entity_category_id_8a55fce7_fk_ledger_category_id` FOREIGN KEY (`category_id`) REFERENCES `ledger_category` (`id`),
   CONSTRAINT `ledger_entity_user_id_1c3fd54f_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2379 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -293,7 +293,7 @@ CREATE TABLE `ledger_ledger` (
   CONSTRAINT `ledger_ledger_transdest_id_6e093f84_fk_ledger_entity_id` FOREIGN KEY (`transdest_id`) REFERENCES `ledger_entity` (`id`),
   CONSTRAINT `ledger_ledger_transsource_id_eaf218b7_fk_ledger_entity_id` FOREIGN KEY (`transsource_id`) REFERENCES `ledger_entity` (`id`),
   CONSTRAINT `ledger_ledger_user_id_20de4c7b_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=29570 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -369,7 +369,7 @@ CREATE TABLE `ledger_settings` (
   CONSTRAINT `ledger_settings_home_account_id_e830e254_fk_ledger_entity_id` FOREIGN KEY (`home_account_id`) REFERENCES `ledger_entity` (`id`),
   CONSTRAINT `ledger_settings_unknown_account_id_909bbb01_fk_ledger_entity_id` FOREIGN KEY (`unknown_account_id`) REFERENCES `ledger_entity` (`id`),
   CONSTRAINT `ledger_settings_user_id_5a067292_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -441,7 +441,7 @@ CREATE TABLE `ledger_transactiontype` (
   `sel_fg_color` varchar(15) NOT NULL,
   `sel_bg_color` varchar(15) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=139 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
